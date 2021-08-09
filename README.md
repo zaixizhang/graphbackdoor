@@ -3,6 +3,8 @@ A PyTorch implementation of "Backdoor Attacks to Graph Neural Networks" (SACMAT'
 
 <div align=center><img src="https://github.com/zaixizhang/graphbackdoor/blob/main/graphbackdoor.png" width="700"/></div>
 
+The code is based on the Pytorch implementation of [[GIN]](https://github.com/weihua916/powerful-gnns)
+
 ## Abstract   
 In this work, we propose the first backdoor attack to graph neural
 networks (GNN). Specifically, we propose a *subgraph based backdoor
