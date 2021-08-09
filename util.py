@@ -233,7 +233,7 @@ def backdoor_graph_generation_random(dataset, degree_as_tag, frac, num_backdoor_
 
     train_graph_file.write(" ".join(str(idx) for idx in rand_backdoor_graph_idx))
     train_graph_file.close()
-    index=0
+
     for idx in rand_backdoor_graph_idx:
         # print(train_graphs[idx].edge_mat)
         num_nodes = torch.max(train_graphs[idx].edge_mat).numpy() + 1
@@ -243,10 +243,14 @@ def backdoor_graph_generation_random(dataset, degree_as_tag, frac, num_backdoor_
             rand_select_nodes = np.random.choice(num_nodes, num_backdoor_nodes)
         else:
             rand_select_nodes = np.random.choice(num_nodes, num_backdoor_nodes, replace=False)
-            train_graph_nodefile.write(" ".join(str(idx) for idx in rand_select_nodes))
-            train_graph_nodefile.write("\n")
+        # print('select nodes:', rand_select_nodes)
+
+        train_graph_nodefile.write(" ".join(str(idx) for idx in rand_select_nodes))
+        train_graph_nodefile.write("\n")
 
         edges = train_graphs[idx].edge_mat.transpose(1, 0).numpy().tolist()
+        # print('raw edges:', edges)
+        # print('#raw edges:', len(edges))
 
         ### Remove existing edges
         for i in rand_select_nodes:
@@ -255,24 +259,17 @@ def backdoor_graph_generation_random(dataset, degree_as_tag, frac, num_backdoor_
                     edges.remove([i, j])
                 if (i, j) in train_graphs[idx].g.edges():
                     train_graphs[idx].g.remove_edge(i, j)
+        # print('after remove:', len(edges))
 
+        ### map node index [0,1,.., num_backdoor_node-1] to corresponding nodes in rand_select_nodes
+        ### and attach the subgraph
         for e in G_gen.edges:
             # print([rand_select_nodes[e[0]], rand_select_nodes[e[1]]])
             edges.append([rand_select_nodes[e[0]], rand_select_nodes[e[1]]])
             edges.append([rand_select_nodes[e[1]], rand_select_nodes[e[0]]])
             train_graphs[idx].g.add_edge(e[0], e[1])
-
-        if num_nodes>=num_backdoor_nodes:
-            backdoor_graph_adjlist = open(
-            'subgraph_gen/' + str(graph_type) + '_' + str(dataset) + '_' + 'triggersize_' +str(num_backdoor_nodes)+'_prob_' + str(prob) + '_graphindex_'+str(index)+'.backdoor_graph_adjlist', 'w')
-            edgelist=list(train_graphs[idx].g.edges())
-            for i in range(len(edgelist)):
-                backdoor_graph_adjlist.write(str(edgelist[i][0])+" "+str(edgelist[i][1]))
-                backdoor_graph_adjlist.write("\n")
-                backdoor_graph_adjlist.write(str(edgelist[i][1])+" "+str(edgelist[i][0]))
-                backdoor_graph_adjlist.write("\n")
-            backdoor_graph_adjlist.close()
-            index+=1
+        # print('after add:', len(edges))
+        # print('new edges:', edges)
 
         train_graphs[idx].edge_mat = torch.LongTensor(np.asarray(edges).transpose())
         train_graphs[idx].label = target_label
@@ -442,7 +439,8 @@ def backdoor_graph_generation_degree(dataset, degree_as_tag, frac, num_backdoor_
         select_nodes = sorted(degree_list, key=lambda k: k[1], reverse=True)
         rand_select_nodes= [node[0] for node in select_nodes[:num_backdoor_nodes]]
         #assert len(rand_select_nodes)==num_backdoor_nodes
-
+# most connected subgraph
+        #select_nodes=most
 
         edges = train_graphs[idx].edge_mat.transpose(1, 0).numpy().tolist()
         ### Remove existing edges between selected nodes
@@ -450,8 +448,6 @@ def backdoor_graph_generation_degree(dataset, degree_as_tag, frac, num_backdoor_
             for j in rand_select_nodes:
                 if [i, j] in edges:
                     edges.remove([i, j])
-                if (i, j) in train_graphs[idx].g.edges():
-                    train_graphs[idx].g.remove_edge(i, j)
         # print('after remove:', len(edges))
 
         for e in G_gen.edges:
@@ -459,8 +455,8 @@ def backdoor_graph_generation_degree(dataset, degree_as_tag, frac, num_backdoor_
             # print([rand_select_nodes[e[0]], rand_select_nodes[e[1]]])
                 edges.append([rand_select_nodes[e[0]], rand_select_nodes[e[1]]])
                 edges.append([rand_select_nodes[e[1]], rand_select_nodes[e[0]]])
-                train_graphs[idx].g.add_edge(e[0], e[1])
-
+        # print('after add:', len(edges))
+        # print('new edges:', edges)
 
         train_graphs[idx].edge_mat = torch.LongTensor(np.asarray(edges).transpose())
         train_graphs[idx].label = target_label
@@ -499,23 +495,19 @@ def backdoor_graph_generation_degree(dataset, degree_as_tag, frac, num_backdoor_
             for j in rand_select_nodes:
                 if [i, j] in edges:
                     edges.remove([i, j])
-                if (i, j) in test_graphs[idx].g.edges():
-                    test_graphs[idx].g.remove_edge(i, j)
         # print('after remove:', len(edges))
 
         ### map node index [0,1,.., num_backdoor_node-1] to corresponding nodes in rand_select_nodes
         ### and attach the subgraph
-        G_gen = nx.erdos_renyi_graph(num_backdoor_nodes, 0.5)
         for e in G_gen.edges:
             if e[0]<num_nodes and e[1]<num_nodes:
+                # print([rand_select_nodes[e[0]], rand_select_nodes[e[1]]])
                 edges.append([rand_select_nodes[e[0]], rand_select_nodes[e[1]]])
                 edges.append([rand_select_nodes[e[1]], rand_select_nodes[e[0]]])
-                test_graphs[idx].g.add_edge(e[0], e[1])
-        if len(edges) == 0:
-            test_graphs[idx].edge_mat = torch.LongTensor([[], []])
-        else:
-            test_graphs[idx].edge_mat = torch.LongTensor(np.asarray(edges).transpose())
+        # print('after add:', len(edges))
+        # print('new edges:', edges)
 
+        test_graphs[idx].edge_mat = torch.LongTensor(np.asarray(edges).transpose())
         test_graphs[idx].node_tags = list(dict(test_graphs[idx].g.degree).values())
         test_graphs[idx].node_features = torch.zeros(len(test_graphs[idx].node_tags), len(tag2index))
         test_graphs[idx].node_features[range(len(test_graphs[idx].node_tags)), [tag2index[tag] for tag in test_graphs[idx].node_tags]] = 1
@@ -523,9 +515,9 @@ def backdoor_graph_generation_degree(dataset, degree_as_tag, frac, num_backdoor_
     test_backdoor_graphs = [graph for graph in test_graphs if graph.label != target_label]
 
     return train_graphs, test_backdoor_graphs
-
 def backdoor_graph_generation_connect(dataset, degree_as_tag, frac, num_backdoor_nodes, seed, fold_idx, target_label,
                                      graph_type, prob, K,tag2index):
+    ## erdos_renyi
     if graph_type == 'ER':
         print(np.log(num_backdoor_nodes) / num_backdoor_nodes)
         assert prob > np.log(num_backdoor_nodes) / num_backdoor_nodes
@@ -641,21 +633,17 @@ def backdoor_graph_generation_connect(dataset, degree_as_tag, frac, num_backdoor
             node_query.remove(add_node)
             select_nodes.append(add_node)
 
-        assert len(select_nodes)==num_backdoor_nodes
         edges = train_graphs[idx].edge_mat.transpose(1, 0).numpy().tolist()
 
         for i in select_nodes:
             for j in select_nodes:
                 if [i, j] in edges:
                     edges.remove([i, j])
-                if (i, j) in train_graphs[idx].g.edges():
-                    train_graphs[idx].g.remove_edge(i, j)
 
         for e in G_gen.edges:
             if e[0]<len(select_nodes) and e[1]<len(select_nodes):
                 edges.append([select_nodes[e[0]], select_nodes[e[1]]])
                 edges.append([select_nodes[e[1]], select_nodes[e[0]]])
-                train_graphs[idx].g.add_edge(e[0], e[1])
 
         train_graphs[idx].edge_mat = torch.LongTensor(np.asarray(edges).transpose())
         train_graphs[idx].label = target_label
@@ -715,8 +703,6 @@ def backdoor_graph_generation_connect(dataset, degree_as_tag, frac, num_backdoor
             for j in select_nodes:
                 if [i, j] in edges:
                     edges.remove([i, j])
-                if (i, j) in test_graphs[idx].g.edges():
-                    test_graphs[idx].g.remove_edge(i, j)
         # print('after remove:', len(edges))
 
         ### map node index [0,1,.., num_backdoor_node-1] to corresponding nodes in rand_select_nodes
@@ -726,7 +712,6 @@ def backdoor_graph_generation_connect(dataset, degree_as_tag, frac, num_backdoor
                 # print([rand_select_nodes[e[0]], rand_select_nodes[e[1]]])
                 edges.append([select_nodes[e[0]], select_nodes[e[1]]])
                 edges.append([select_nodes[e[1]], select_nodes[e[0]]])
-                test_graphs[idx].g.add_edge(e[0], e[1])
         # print('after add:', len(edges))
         # print('new edges:', edges)
 
