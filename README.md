@@ -24,6 +24,15 @@ numpy==1.17.1
 torch==1.2.0
 scipy==1.3.1
 networkx==2.4
+tqdm==4.47.0
+```
+## Run the code  
+You can clone this repository and run the code
+
+```
+git clone https://github.com/zaixizhang/graphbackdoor.git
+cd graphbackdoor
+python main_backdoor.py --dataset twitter 
 ```
 
 ## Cite
