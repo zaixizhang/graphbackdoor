@@ -29,6 +29,7 @@ torch==1.2.0
 scipy==1.3.1
 networkx==2.4
 tqdm==4.47.0
+pickle==0.7.5
 ```
 ## Run the code  
 You can clone this repository and run the code
