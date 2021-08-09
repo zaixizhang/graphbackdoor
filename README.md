@@ -38,7 +38,7 @@ You can clone this repository and run the code
 git clone https://github.com/zaixizhang/graphbackdoor.git
 cd graphbackdoor
 unzip dataset.zip
-python main_backdoor.py --dataset twitter 
+sh train.sh 
 ```
 
 ## Cite
