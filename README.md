@@ -49,17 +49,8 @@ If you find this repo to be useful, please cite our paper. Thank you.
 @inproceedings{10.1145/3450569.3463560,
 author = {Zhang, Zaixi and Jia, Jinyuan and Wang, Binghui and Gong, Neil Zhenqiang},
 title = {Backdoor Attacks to Graph Neural Networks},
-year = {2021},
-isbn = {9781450383653},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
 url = {https://doi.org/10.1145/3450569.3463560},
 doi = {10.1145/3450569.3463560},
-booktitle = {Proceedings of the 26th ACM Symposium on Access Control Models and Technologies},
-pages = {15–26},
-numpages = {12},
-keywords = {graph neural networks, backdoor attack},
-location = {Virtual Event, Spain},
 series = {SACMAT '21}
 }
 ```
